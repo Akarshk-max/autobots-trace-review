@@ -1,0 +1,150 @@
+[project]
+name = "autobots"
+version = "0.1.0"
+description = ""
+authors = [{name = "Anurag Jha", email = "anurag@runkai.ai"}]
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi==0.139.0",
+    "uvicorn==0.51.0",
+    "pydantic[email]==2.13.4",
+    "pydantic-settings==2.14.2",
+    "loguru==0.7.3",
+    "openai[datalib]==2.54.0",
+    "mcp==1.22.0",
+    "selenium==4.46.0",
+    #"stability-sdk==^0.8.3",
+    "aiohttp==3.14.3",
+    "duckduckgo-search==8.1.1",
+    "pinecone-client==6.0.0",
+    "boto3==1.43.49",
+    "boto3-stubs[essential]==1.43.49",
+    "cachetools==6.2.6",
+    "tiktoken==0.13.0",
+    "pillow==12.3.0",
+    "ddtrace==4.11.0",
+    "sqlalchemy==2.0.51",
+    "psycopg2-binary==2.9.12",
+    "cloud-sql-python-connector==1.20.4",
+    "pg8000==1.31.5",
+    "supabase==2.31.0",
+    "python-jose==3.5.0",
+    "python-multipart==0.0.32",
+    "redis==7.4.0",
+    "fastapi-redis-sdk>=0.8.0",
+    "aiodns==4.0.4",
+    "jinja2==3.1.6",
+    "networkx==3.6.1",
+    "unstructured-client==0.42.12",
+    "google-ads==29.1.0",
+    "assemblyai==0.48.4",
+    "linkedin-scraper==2.11.5",
+    "chromadb==1.3.7",
+    "opentelemetry-proto==1.39.1",
+    "opentelemetry-sdk==1.39.1",
+    "opentelemetry-exporter-otlp-proto-grpc==1.39.1",
+    "webdriver-manager==4.1.2",
+    "psutil==7.2.2",
+    "replicate==1.0.7",
+    "discord==2.3.2",
+    "requests==2.34.2",
+    "apscheduler==3.11.3",
+    "werkzeug==3.1.8",
+    "motor==3.7.1",
+    "google-search-results==2.4.2",
+    #"celery==5.6.0",
+    "asgiref==3.11.1",
+    "pendulum==3.2.0",
+    "pydantic-extra-types==2.11.1",
+    "anthropic==1.4.0",
+    "pyyaml==6.0.3",
+    "slack-bolt==1.29.0",
+    "intuit-oauth==1.2.6",
+    "deepgram-sdk==5.3.0",
+    "pymysql==1.2.0",
+    "sqlalchemy-bigquery==1.17.0",
+    "oracledb==3.4.2",
+    "snowflake-sqlalchemy==1.11.0",
+    "databricks-sqlalchemy==2.0.10",
+    "pandas==3.0.5",
+    "openpyxl==3.1.5",
+    "google-cloud-storage==3.9.0",
+    "azure-ai-inference==1.0.0b9",
+    "azure-storage-blob==12.30.0",
+    #"ray==2.53.0",
+    "pymupdf==1.28.0",
+    "setuptools==83.0.0",
+    "google-genai==2.22.0",
+    "nest-asyncio==1.6.0",
+    "python-docx==1.2.0",
+    "python-pptx==1.0.2",
+    "weaviate-client==4.22.0",
+    "neo4j==6.2.0",
+    "json5==0.12.1",
+    "cartesia>=2.0.15,<3.0.0",
+    "xai-sdk==1.7.0",
+    "playwright==1.58.0",
+    "beautifulsoup4==4.15.0",
+    "onnxruntime==1.21.0",
+    "langchain-text-splitters==1.1.2",
+    "grpcio==1.78.0",
+    "grpcio-status==1.78.0",
+    "primp==1.2.2",
+    "jmespath==1.1.0",
+    "pyarrow==23.0.1",
+    "duckdb==1.5.4",
+    "xlrd==2.0.2",
+    "daytona==0.203.0",
+    "stripe==15.3.0",
+    "temporalio==1.31.0",
+    "fastmcp>=2.13.3",
+    "sqlglot==30.17.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio==1.4.0",
+    "pytest-xdist==3.8.0",
+    "pytest-timeout==2.4.0",
+    "ruff==0.16.1",
+    "pre-commit==4.6.1",
+    "isort==8.0.1",
+]
+
+[tool.ruff]
+# fix is opt-in via `--fix` (make lint, pre-commit) so a bare `ruff check` never
+# silently rewrites the working tree.
+fix = false
+line-length = 100 # defaults to 88
+target-version = "py313"
+lint.select = ["E", "F", "B", "I"]  # pycodestyle, pyflakes, bugbear, isort
+lint.ignore = [
+    "E501",  # Line too long
+    # --- Existing backlog: real rules, but too many pre-existing hits to gate on today.
+    # TODO: burn these down file-by-file, then remove from ignore so they're enforced.
+    "B008",  # function-call-in-default — 138 hits, mostly intentional DI helpers
+    "B904",  # raise-without-from-inside-except — 186 hits, stylistic
+    "B023",  # function-uses-loop-variable — 65 hits, needs per-site review (real bug class)
+    "B007",  # unused-loop-variable — 35 hits
+    "B905",  # zip-without-explicit-strict — 14 hits
+    "E402",  # module-import-not-at-top — 12 hits, often intentional
+    "B006",  # mutable-argument-default — 5 hits, fix needs per-call-site review
+    "B012",  # return-in-finally (swallows exceptions) — 4 hits, control-flow-sensitive
+    "B018",  # useless-expression — 3 hits, verify intent before removing
+]
+
+# FastAPI's dependency injectors are function calls in argument defaults by design,
+# so B008 (function-call-in-default) is a false positive for them.
+lint.flake8-bugbear.extend-immutable-calls = [
+    "fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Path",
+    "fastapi.Header", "fastapi.Cookie", "fastapi.Form", "fastapi.File",
+    "fastapi.Security", "fastapi.params.Depends",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/autobots"]

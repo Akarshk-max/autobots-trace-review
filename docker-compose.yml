@@ -1,0 +1,191 @@
+version: "3.8"
+
+services:
+
+  autobots:
+    container_name: autobots
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    ports:
+      - "8001:80"
+    env_file:
+      - .env.local
+    networks:
+      - network
+    # Ensure this service waits for its dependencies and knows how to connect.
+    depends_on:
+      - redis
+      - mongodb
+    environment:
+      - REDIS_HOST=redis
+      - DD_TRACE_ENABLED=false
+
+#  autobots:
+#    container_name: autobots
+#    image: registry.gitlab.com/runkai/autobots:feat-ui
+#    ports:
+#      - "80:80"
+#    env_file:
+#      - .env.local
+#    networks:
+#      network:
+
+  # The new ingestion worker service.
+  ingestion-worker:
+    container_name: autobots-ingestion-worker
+    # This is a background worker that consumes jobs from Redis. It does not expose any ports.
+    # Reuse the same build as the main 'autobots' service.
+    build:
+      context: .
+      dockerfile: ./ingestion-worker.dockerfile
+    env_file:
+      - .env.local
+    networks:
+      - network
+    # Ensure the worker also waits for Redis and knows how to connect.
+    depends_on:
+      - redis
+      - mongodb
+    # The worker also needs to know how to connect to Redis.
+    environment:
+      - REDIS_HOST=redis
+      - DD_TRACE_ENABLED=false
+
+  # Temporal runner — polls for workflow/activity tasks
+  runner:
+    container_name: autobots-runner
+    build:
+      context: .
+      dockerfile: ./autobots_runner.dockerfile
+    ports:
+      - "8005:8005"
+    env_file:
+      - .env.local
+    networks:
+      - network
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  autobots-playwright:
+    container_name: autobots-playwright
+    build:
+      context: .
+      dockerfile: ./autobots_playwright.dockerfile
+    ports:
+      - "8010:8010"
+    env_file:
+      - .env.local
+    networks:
+      - network
+    depends_on:
+      - redis
+
+  dashboard:
+    container_name: autobots-dashboard
+    build:
+      context: .
+      dockerfile: ./dashboard.dockerfile
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env.local
+    networks:
+      - network
+    environment:
+      - DD_TRACE_ENABLED=false
+
+  libreoffice:
+    container_name: autobots-libreoffice
+    build:
+      context: .
+      dockerfile: ./libreoffice.dockerfile
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env.local
+    networks:
+      - network
+    environment:
+      - DD_TRACE_ENABLED=false
+
+  #  DD_AGENT_HOST env contains name of the service datadog-agent
+#  datadog-agent:
+#    container_name: datadog-agent
+#    image: gcr.io/datadoghq/agent:latest
+#    cgroup_parent: host
+#    pid: host
+#    env_file:
+#      - .env.local.datadog
+#    ports:
+#      - "8126:8126"
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock:ro
+#      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+#      - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+#    networks:
+#      - network
+
+  # Defined the Redis service, which is a required dependency.
+  redis:
+    container_name: redis
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - network
+
+  weaviate:
+    container_name: weaviate
+    image: cr.weaviate.io/semitechnologies/weaviate:1.27.0
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      ENABLE_MODULES: 'text2vec-openai'
+    networks:
+      - network
+
+  neo4j:
+    container_name: neo4j
+    image: neo4j:5.26-community
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/local_dev_password
+    networks:
+      - network
+
+  unstructured:
+    container_name: unstructured
+    image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
+    ports:
+      - "8200:8000"
+    environment:
+      - NUM_WORKERS=2
+    networks:
+      - network
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - network
+
+volumes:
+  mongodb_data:
+
+networks:
+  network:
+    name: supabase_default
+    external: true

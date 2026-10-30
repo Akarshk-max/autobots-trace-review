@@ -1,0 +1,61 @@
+from typing import List
+
+from loguru import logger
+from motor.motor_asyncio import AsyncIOMotorDatabase
+
+from src.autobots.conn.flux.flux_client import FluxClient, get_flux_client
+from src.autobots.core.settings import Settings, SettingsProvider
+from src.autobots.data_model.context import Context
+from src.autobots.data_model.ownership import Ownership
+from src.autobots.integrations.app_conn.app_conn_helper import AppConnHelper
+from src.autobots.integrations.app_type_to_integration_class import AppTypeToIntegrationClass
+from src.autobots.integrations.app_types import AppTypes
+from src.autobots.integrations.integration_model import IntegrationDoc
+from src.autobots.integrations.integration_type.replicate_flux_auth import ReplicateFluxAuthModel
+from src.autobots.user.user_orm_model import UserORM
+
+
+class AppConnReplicateFlux:
+    @staticmethod
+    async def get_replicate_flux(
+        ctx: Context,
+        db: AsyncIOMotorDatabase,
+        user: UserORM,
+        settings: Settings = SettingsProvider.sget(),
+    ) -> FluxClient | None:
+        app_type = AppTypes.replicate_flux
+        conn: FluxClient | None = None
+        ownership: List[Ownership] = await AppConnHelper.get_ownership(
+            ctx=ctx, db=db, user=user, app_type=app_type
+        )
+        for owner in ownership:
+            try:
+                match owner:
+                    case Ownership.user:
+                        integration_doc: IntegrationDoc = await AppConnHelper.get_app_auth(
+                            ctx=ctx, db=db, user=user, app_type=app_type
+                        )
+                        app_auth_class = AppTypeToIntegrationClass.get(app_type)
+                        app_auth: ReplicateFluxAuthModel = (
+                            app_auth_class.get_auth_model_type().model_validate(integration_doc.auth)
+                        )
+                        api_key = app_auth.api_key
+                        conn: FluxClient = get_flux_client(ctx=ctx, user=user, api_key=api_key)
+                    case Ownership.system:
+                        api_key = settings.REPLICATE_API_KEY
+                        conn: FluxClient = get_flux_client(ctx=ctx, user=user, api_key=api_key)
+                    case _:
+                        logger.bind(ctx=ctx, app_type=app_type, owner=owner).error(
+                            f"Cannot get app conn replicate flux for apptype: {app_type} and owner: {owner}"
+                        )
+                if conn:
+                    logger.bind(ctx=ctx, app_type=app_type, owner=owner).info(
+                        f"Got app conn replicate flux for apptype: {app_type} and owner: {owner}"
+                    )
+                    break
+            except Exception as e:
+                logger.bind(ctx=ctx, app_type=app_type, owner=owner, error=str(e)).exception(
+                    "Cannot get app conn replicate flux"
+                )
+                continue
+        return conn

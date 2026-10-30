@@ -1,0 +1,9 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version. Keep in sync with the ruff pinned in pyproject.toml/uv.lock so the
+    # hook and `make lint` agree (older ruff rejects target-version = "py313").
+    rev: v0.16.1
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        args: [ --fix ]

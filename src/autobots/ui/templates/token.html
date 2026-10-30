@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h2>API Access Token</h2>
+                <p class="text-muted">
+                    Confirm your password to mint a JWT access token for the Autobots API,
+                    then copy it straight into your client, script or terminal.
+                </p>
+
+                {% if error %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                {% endif %}
+
+                <form method="post" action="/token" autocomplete="off">
+                    <div class="form-group">
+                        <label for="username">Email</label>
+                        <input type="text" class="form-control" id="username" name="username"
+                               value="{{ user.user.email if user else '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password"
+                               autocomplete="current-password" autofocus required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        {% if access_token %}Get a new token{% else %}Get Access Token{% endif %}
+                    </button>
+                </form>
+
+                {% if access_token %}
+                <hr>
+
+                <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="access_token" class="mb-0">Access token ({{ token_type }})</label>
+                        <button type="button" class="btn btn-sm btn-primary"
+                                data-copy-target="access_token">Copy</button>
+                    </div>
+                    <textarea class="form-control text-monospace mt-2" id="access_token" rows="5"
+                              readonly onclick="this.select()"
+                              style="word-break: break-all; font-size: 13px;">{{ access_token }}</textarea>
+                    <small class="form-text text-muted">
+                        {% if expires_at %}Expires {{ expires_at }}{% if expires_in %} ({{ expires_in }} from now){% endif %}.{% endif %}
+                        Treat it like a password &mdash; it grants API access as
+                        {{ user.user.email if user else 'you' }} until it expires.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="auth_header" class="mb-0">Authorization header</label>
+                        <button type="button" class="btn btn-sm btn-secondary"
+                                data-copy-target="auth_header">Copy</button>
+                    </div>
+                    <textarea class="form-control text-monospace mt-2" id="auth_header" rows="3"
+                              readonly onclick="this.select()"
+                              style="word-break: break-all; font-size: 13px;">Authorization: {{ token_type }} {{ access_token }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="curl_example" class="mb-0">curl</label>
+                        <button type="button" class="btn btn-sm btn-secondary"
+                                data-copy-target="curl_example">Copy</button>
+                    </div>
+                    <textarea class="form-control text-monospace mt-2" id="curl_example" rows="4"
+                              readonly onclick="this.select()"
+                              style="word-break: break-all; font-size: 13px;">curl -H "Authorization: {{ token_type }} {{ access_token }}" \
+  {{ api_url }}/v1/hello</textarea>
+                </div>
+
+                <script>
+                    // Copy the referenced field. navigator.clipboard needs a secure context
+                    // (https / localhost), so fall back to select + execCommand over http.
+                    document.querySelectorAll("[data-copy-target]").forEach(function (btn) {
+                        btn.addEventListener("click", function () {
+                            var field = document.getElementById(btn.dataset.copyTarget);
+                            var done = function () {
+                                var label = btn.textContent;
+                                btn.textContent = "Copied";
+                                setTimeout(function () { btn.textContent = label; }, 2000);
+                            };
+                            var fallback = function () {
+                                field.select();
+                                field.setSelectionRange(0, field.value.length);
+                                if (document.execCommand("copy")) { done(); }
+                            };
+                            if (navigator.clipboard && window.isSecureContext) {
+                                navigator.clipboard.writeText(field.value).then(done, fallback);
+                            } else {
+                                fallback();
+                            }
+                        });
+                    });
+                </script>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

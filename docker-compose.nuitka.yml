@@ -1,0 +1,95 @@
+services:
+
+  app:
+    container_name: autobots-nuitka-app
+    image: autobots-nuitka-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.local
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - network
+
+  dashboard:
+    container_name: autobots-nuitka-dashboard
+    image: autobots-nuitka-dashboard
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env.local
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - network
+
+  scheduler:
+    container_name: autobots-nuitka-scheduler
+    image: autobots-nuitka-scheduler
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env.local
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - network
+
+  ingestion-worker:
+    container_name: autobots-nuitka-ingestion-worker
+    image: autobots-nuitka-ingestion-worker
+    env_file:
+      - .env.local
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - network
+
+  playwright:
+    container_name: autobots-nuitka-playwright
+    image: autobots-nuitka-playwright
+    ports:
+      - "8010:8010"
+    env_file:
+      - .env.local
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - network
+
+  libreoffice:
+    container_name: autobots-nuitka-libreoffice
+    image: autobots-nuitka-libreoffice
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env.local
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - network
+
+  redis:
+    container_name: redis
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge

@@ -1,0 +1,98 @@
+version: "3.8"
+
+services:
+
+  autobots:
+    container_name: autobots
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    ports:
+      - "8001:80"
+    env_file:
+      - .env.local
+    networks:
+      - network
+    # Ensure this service waits for its dependencies and knows how to connect.
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+#  autobots:
+#    container_name: autobots
+#    image: registry.gitlab.com/runkai/autobots:feat-ui
+#    ports:
+#      - "80:80"
+#    env_file:
+#      - .env.local
+#    networks:
+#      network:
+
+  # The new ingestion worker service.
+  ingestion-worker:
+    container_name: autobots-ingestion-worker
+    # This is a background worker that consumes jobs from Redis. It does not expose any ports.
+    # Reuse the same build as the main 'autobots' service.
+    build:
+      context: .
+      dockerfile: ./ingestion-worker.dockerfile
+    env_file:
+      - .env.local
+    networks:
+      - network
+    # Ensure the worker also waits for Redis and knows how to connect.
+    depends_on:
+      - redis
+    # The worker also needs to know how to connect to Redis.
+    environment:
+      - REDIS_HOST=redis
+
+  #  DD_AGENT_HOST env contains name of the service datadog-agent
+  datadog-agent:
+    container_name: datadog-agent
+    image: gcr.io/datadoghq/agent:latest
+#    cgroupns host
+    cgroup_parent: host
+    pid: host
+    env_file:
+      - .env.local.datadog
+    ports:
+      - "8126:8126"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+    networks:
+      - network
+
+  # Defined the Redis service, which is a required dependency.
+  redis:
+    container_name: redis
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - network
+
+  # This local MongoDB service is now commented out by default.
+  # A developer could temporarily uncomment it for offline testing if needed.
+  # Otherwise, the application will connect to the cloud MongoDB instance
+  # using the MONGO_CONN and MONGO_DATABASE environment variables from .env.local.
+  # 
+  # mongodb:
+  #   container_name: mongodb
+  #   image: mongo:7.0
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   networks:
+  #     - network
+
+# volumes:
+#   mongodb_data:
+
+networks:
+  network:
+    driver: bridge

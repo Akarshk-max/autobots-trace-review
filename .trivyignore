@@ -1,0 +1,21 @@
+# Documented exceptions for AUT-1464 Trivy scanning. Only add a CVE here
+# after confirming no fixed version exists anywhere (not just "not yet
+# upgraded") — see git history / PR discussion on AUT-1464 for the
+# investigation behind each entry.
+
+# python-ecdsa: Minerva timing attack on the P-256 curve. No fix planned —
+# maintainers have declared pure-Python timing-attack fixes out of scope.
+# Pulled in transitively via python-jose for JWT auth. Real exposure is
+# conditional: only exercised if JWT_ALGORITHM=ES256 is ever configured
+# (see src/autobots/auth/security.py). Proper fix is migrating off
+# python-jose/ecdsa to an OpenSSL-backed JWT library, not a version bump —
+# tracked separately.
+CVE-2024-23342
+
+# chromadb: pre-authentication code injection via trust_remote_code on the
+# /api/v2/.../collections endpoint. No patched version exists yet — even
+# the latest chromadb release is listed as vulnerable. Lower risk here
+# since this repo only uses chromadb.HttpClient as a client against an
+# external CHROMA_HOST; it does not run the vulnerable chromadb server
+# component itself.
+CVE-2026-45829

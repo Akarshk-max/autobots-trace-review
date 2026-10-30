@@ -1,0 +1,173 @@
+[
+    {
+        "intent_version": "1",
+        "strict_mode": false,
+        "targets": [
+            {
+            "url": "https://en.wikipedia.org/wiki/Web_scraping",
+            "label": "primary"
+            }
+        ],
+        "tasks": [
+            { "kind": "main_content" },
+            { "kind": "links", "limit": 100 },
+            { "kind": "metadata" }
+        ],
+        "navigation": {
+            "load_profile": "auto",
+            "page_kind": "article",
+            "wait": { "ready": "auto", "selectors_any": ["article", "main"] },
+            "pagination": { "mode": "none" }
+        },
+        "extraction": {
+            "content": {
+            "selectors_hint": ["article", "main"],
+            "exclude_selectors_hint": ["nav", "footer", ".navbox", ".reflist"]
+            }
+        },
+        "expectations": {
+            "min_text_length_hint": 400,
+            "block_signals_hint": ["captcha", "cloudflare", "access denied"]
+        },
+        "output": { "format": "json", "include_raw_html": "on_failure", "verbosity": "normal" },
+        "policy_id": "default"
+    },
+    {
+        "intent_version": "1",
+        "strict_mode": false,
+        "targets": [
+            {
+            "url": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+            "label": "product"
+            }
+        ],
+        "tasks": [
+            { "kind": "main_content" },
+            { "kind": "links", "limit": 200 },
+            { "kind": "metadata" }
+        ],
+        "navigation": {
+            "load_profile": "auto",
+            "page_kind": "product",
+            "wait": { "ready": "auto", "selectors_any": ["main", ".product_page", ".price_color"] },
+            "pagination": { "mode": "none" }
+        },
+        "extraction": {
+            "content": {
+            "selectors_hint": ["main", ".product_page"],
+            "exclude_selectors_hint": ["nav", "footer", ".breadcrumb"]
+            }
+        },
+        "expectations": {
+            "contains_any_text_hint": ["£", "In stock", "Product Information", "Add to basket"],
+            "block_signals_hint": ["captcha", "cloudflare", "access denied"]
+        },
+        "output": { "format": "json", "include_raw_html": "on_failure", "verbosity": "normal" },
+        "policy_id": "default"
+    },
+    {
+        "intent_version": "1",
+        "strict_mode": false,
+        "targets": [
+            {
+            "url": "https://quotes.toscrape.com/js/",
+            "label": "primary"
+            }
+        ],
+        "tasks": [
+            { "kind": "main_content" },
+            { "kind": "links", "limit": 100 },
+            { "kind": "metadata" }
+        ],
+        "navigation": {
+            "load_profile": "auto",
+            "page_kind": "article",
+            "wait": { "ready": "auto", "selectors_any": [".quote", "main"] },
+            "pagination": { "mode": "none" }
+        },
+        "extraction": {
+            "content": {
+            "selectors_hint": ["main", ".quote"],
+            "exclude_selectors_hint": ["nav", "footer"]
+            }
+        },
+        "expectations": {
+            "min_text_length_hint": 150,
+            "block_signals_hint": ["captcha", "cloudflare", "access denied"]
+        },
+        "output": { "format": "json", "include_raw_html": "on_failure", "verbosity": "normal" },
+        "policy_id": "js-heavy"
+    },
+    {
+        "intent_version": "1",
+        "strict_mode": false,
+        "targets": [
+            {
+            "url": "https://webscraper.io/test-sites/e-commerce/static/computers/laptops",
+            "label": "listing"
+            }
+        ],
+        "tasks": [
+            { "kind": "main_content" },
+            { "kind": "links", "limit": 200 },
+            { "kind": "metadata" }
+        ],
+        "navigation": {
+            "load_profile": "auto",
+            "page_kind": "product",
+            "wait": { "ready": "auto", "selectors_any": ["main", ".thumbnail", ".price"] },
+            "pagination": { "mode": "none" }
+        },
+        "extraction": {
+            "content": {
+            "selectors_hint": ["main"],
+            "exclude_selectors_hint": ["nav", "footer", ".sidebar"]
+            }
+        },
+        "expectations": {
+            "contains_any_text_hint": ["$", "reviews", "Laptops"],
+            "block_signals_hint": ["captcha", "cloudflare", "access denied"]
+        },
+        "output": { "format": "json", "include_raw_html": "on_failure", "verbosity": "normal" },
+        "policy_id": "default"
+    },
+    {
+        "intent_version": "1",
+        "strict_mode": false,
+        "targets": [
+            {
+            "url": "https://webscraper.io/test-sites/e-commerce/static/computers/laptops?page=2",
+            "label": "listing_page_2"
+            }
+        ],
+        "tasks": [
+            { "kind": "main_content" },
+            { "kind": "links", "limit": 200 },
+            { "kind": "metadata" }
+        ],
+        "navigation": {
+            "load_profile": "auto",
+            "page_kind": "product",
+            "wait": { "ready": "auto", "selectors_any": ["main", ".thumbnail", ".price"] },
+            "pagination": {
+            "mode": "page_param",
+            "page_param_name": "page",
+            "max_pages": 3,
+            "stop_when_hint": "same_content"
+            }
+        },
+        "extraction": {
+            "content": {
+            "selectors_hint": ["main"],
+            "exclude_selectors_hint": ["nav", "footer", ".sidebar"]
+            }
+        },
+        "expectations": {
+            "contains_any_text_hint": ["$", "reviews", "Laptops"],
+            "block_signals_hint": ["captcha", "cloudflare", "access denied"]
+        },
+        "output": { "format": "json", "include_raw_html": "on_failure", "verbosity": "normal" },
+        "policy_id": "default"
+    }
+
+]

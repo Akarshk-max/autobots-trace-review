@@ -1,0 +1,7 @@
+TALISMAN_ENABLED = True
+TALISMAN_CONFIG = {
+    "frame_options": None,
+}
+ENABLE_CORS = True
+WTF_CSRF_ENABLED = False
+SESSION_COOKIE_SAMESITE = None

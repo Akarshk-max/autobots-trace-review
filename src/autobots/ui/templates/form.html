@@ -1,0 +1,19 @@
+{% block content %}
+
+    <div class="container">
+        <div class="">
+
+            <form method="post" action={{post_to_url}}>
+                {% for item in input_schema %}
+                <div class="form-group">
+<!--                    <label for={{item.name}}>Username</label>-->
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+
+        </div>
+    </div>
+
+{% endblock content %}

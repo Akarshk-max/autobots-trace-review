@@ -1,0 +1,132 @@
+from enum import Enum
+
+
+class ActionType(str, Enum):
+    # LLMs
+    openai_responses = "openai"
+    openai_responses_v2 = "openai_v2"
+    openai_chat = "openai_chat"
+    openai_assistant = "openai_assistant"
+    openrouter = "openrouter"
+    gemini = "gemini"
+    claude = "claude"
+    grok = "grok"
+    deepseek = "deepseek"
+    azure_chat = "azure_chat"
+    azure_responses = "azure_responses"
+    api = "api"
+    database = "database"
+    daytona = "daytona"
+
+    # multicloud
+    multicloud_router = "multicloud_router"
+    multicloud_router_search = "multicloud_router_search"
+    # multimodal
+    multimodal_assistant_openai = "multimodal_assistant_openai"
+    # multimodal_assistant_openai_stream = "multimodal_assistant_openai_stream"
+    multimodal_sandbox_query = "multimodal_sandbox_query"
+    multimodal_graph_rag_query = "multimodal_graph_rag_query"
+    multimodal_google_search = "multimodal_google_search"
+    multimodal_serp_google_search = "multimodal_serp_google_search"
+    multimodal_exa_search = "multimodal_exa_search"
+    # text2text
+    text2text_llm_chat_openai = "text2text_llm_chat_openai"
+    # text2text_llm_chat_openai_stream = "text2text_llm_chat_openai_stream"
+    text2text_llm_chat_openrouter = "text2text_llm_chat_openrouter"
+    text2text_llm_chat_claude = "text2text_llm_chat_claude"
+    text2text_llm_chat_gemini = "text2text_llm_chat_gemini"
+    text2text_llm_responses_openai = "text2text_llm_responses_openai"
+    text2text_llm_chat_grok = "text2text_llm_chat_grok"
+    text2text_llm_chat_deepseek = "text2text_llm_chat_deepseek"
+    # text2text_llm_chat_grok_collections = "text2text_llm_chat_grok_collections"
+    action_llm = "action_llm"
+    text2text_llm_chat_grok_collections = "text2text_llm_chat_grok_collections"
+    text2text_perplexity_sonar = "text2text_perplexity_sonar"
+    text2text_perplexity_search = "text2text_perplexity_search"
+    text2text_llm_chat_claude_vertex = "text2text_llm_chat_claude_vertex"
+    text2text_llm_chat_gemini_vertex = "text2text_llm_chat_gemini_vertex"
+    
+    # text2text_llm_responses_openai_stream = "text2text_llm_responses_openai_stream"
+    # `text2text_llm_chat_with_vector_search_openai` = "text2text_llm_chat_with_vector_search_openai"
+    multimodal_llm_chat_with_vector_search_openai = "multimodal_llm_chat_with_vector_search_openai"
+    llm_objectives_openai = "llm_objectives_openai"
+    text2text_read_url = "text2text_read_url"
+    text2text_search_web = "text2text_search_web"
+    # text2text_search_maps = "text2text_search_maps"
+    text2text_io_mapper = "text2text_io_mapper"
+    text2text_user_input = "text2text_user_input"
+    text2text_api_call = "text2text_api_call"
+    text2text_read_api_file = "text2text_read_api_file"
+    text2text_sql_runner = "text2text_sql_runner"
+    action_text2text_pdf_parser = "action_text2text_pdf_parser"
+    action_kiwi_scout = "action_kiwi_scout"
+    text2text_convert_file_to_pdf_or_txt = "text2text_convert_file_to_pdf_or_txt"
+    json_flatten = "json_flatten"
+    csv_merge = "csv_merge"
+    extract_urls = "extract_urls"
+    urls_to_json = "urls_to_json"
+    file_uploader_openai = "file_uploader_openai"
+    file_uploader_gemini = "file_uploader_gemini"
+    file_uploader_claude = "file_uploader_claude"
+
+    # text2img
+    text2img_dalle_openai = "text2img_dalle_openai"
+    # text2img_stability_ai = "text2img_stability_ai"
+    # text2img_stable_diffusion = "text2img_stable_diffusion"
+    text2img_search_image = "text2img_search_image"
+
+    text2img_imagine_midjourney_ai = "text2img_imagine_midjourney_ai"
+    text2img_button_midjourney_ai = "text2img_button_midjourney_ai"
+    text2img_flux = "text2img_flux"
+    text2img_gemini = "text2img_gemini"
+    text2img_grok = "text2img_grok"
+    # img2img
+    # image_mixer_stable_diffusion = "image_mixer_stable_diffusion"
+    # img2img_stable_diffusion = "img2img_stable_diffusion"
+    img2img_edit_openai = "img2img_edit_openai"
+    img2img_variation_openai = "img2img_variation_openai"
+    img2img_bulk_edit_claid = "img2img_bulk_edit_claid"
+    img2img_photoshoot_claid = "img2img_photoshoot_claid"
+
+    # text2video
+    # text2video_stable_diffusion = "text2video_stable_diffusion"
+    text2video_search_video = "text2video_search_video"
+
+    # video2video
+    video2video_opus = "video2video_opus"
+    text2video_grok = "text2video_grok"
+    # text2audio
+    text2audio_speech_openai = "text2audio_openai"
+    text2audio_speech_cartesia = "text2audio_speech_cartesia"
+    text2audio_speech_deepgram = "text2audio_speech_deepgram"
+
+    # audio2text
+    audio2text_transcription_openai = "audio2text_transcription_openai"
+    audio2text_translation_openai = "audio2text_translation_openai"
+    audio2text_transcription_assemblyai = "audio2text_transcription_assemblyai"
+    audio2text_transcription_deepgram = "audio2text_transcription_deepgram"
+    audio2text_transcription_cartesia = "audio2text_transcription_cartesia"
+    # linkedin
+    action_text2text_linkedin = "action_text2text_linkedin"
+    # mock
+    mock_action = "mock_action"
+    playwright_scrape = "playwright_scrape"
+    playwright_login = "playwright_login"
+    text2video_gemini_veo_video_generation = "text2video_gemini_veo_video_generation"
+    text2video_gemini_omni_video_generation = "text2video_gemini_omni_video_generation"
+    action_text2text_json_reader = "action_text2text_json_reader"
+    action_text2text_csv_to_parquet = "action_text2text_csv_to_parquet"
+    action_text2text_parquet_inspector = "action_text2text_parquet_inspector"
+    text2text_daytona = "text2text_daytona"
+
+    action_text2text_tool_results_query_claude = "action_text2text_tool_results_query_claude"
+    action_text2text_chat_history_query_claude = "action_text2text_chat_history_query_claude"
+    action_text2text_chat_history_query_openai = "action_text2text_chat_history_query_openai"
+    action_text2text_chat_history_query_grok = "action_text2text_chat_history_query_grok"
+
+    action_text2text_context_tool_gemini = "action_text2text_context_tool_gemini"
+    action_text2text_file_search_store_gemini = "action_text2text_file_search_store_gemini"
+    action_text2text_code_execution_gemini = "action_text2text_code_execution_gemini"
+    action_skills = "action_skills"
+    data_plane_v2 = "data_plane_v2"
+    autobots = "autobots"

@@ -1,0 +1,159 @@
+# name: Continuous Tests
+
+# on:
+#   workflow_dispatch:
+#   workflow_call:
+
+# env:
+#   IMAGE_TAG: ${{ github.ref_name }}
+
+# jobs:
+
+#   tests:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 90
+#     environment: test
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Setup Python
+#         uses: actions/setup-python@v7
+#         with:
+#           python-version: '3.10'
+
+#       - name: Prepare for Tests
+#         run: |
+#           sudo apt-get install tesseract-ocr
+#           pip3 install poetry
+#           poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
+
+#       - name: Run Tests
+# #        working-directory: ./tests
+#         run: |
+#           python -m pytest -n auto --timeout=900
+#         env:
+#           ENV: ${{ secrets.ENV }}
+#           COOKIE_DOMAIN: ${{ secrets.COOKIE_DOMAIN }}
+#           ALLOW_ORIGINS: ${{ secrets.ALLOW_ORIGINS }}
+#           ACTION_GRAPH_LOOPS_CONCURRENCY_LIMIT: ${{ secrets.ACTION_GRAPH_LOOPS_CONCURRENCY_LIMIT }}
+#           SCHEDULER_URL: ${{ secrets.SCHEDULER_URL }}
+#           SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
+#           SQLALCHEMY_DATABASE_SCHEMA: ${{ secrets.SQLALCHEMY_DATABASE_SCHEMA }}
+#           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+#           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+#           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+#           MONGO_CONN: ${{ secrets.MONGO_CONN }}
+#           MONGO_DATABASE: ${{ secrets.MONGO_DATABASE }}
+#           REDIS_HOST: ${{ secrets.REDIS_HOST }}
+#           OPENAI_ORG_ID: ${{ secrets.OPENAI_ORG_ID }}
+#           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#           OPENAI_TYPE_IS_AZURE: ${{ secrets.OPENAI_TYPE_IS_AZURE }}
+#           AZURE_OPENAI_API_KEY_EASTUS2: ${{ secrets.AZURE_OPENAI_API_KEY_EASTUS2 }}
+#           AZURE_OPENAI_TTS_API_KEY: ${{ secrets.AZURE_OPENAI_TTS_API_KEY }}
+#           AZURE_OPENAI_WHISPER_API_KEY: ${{ secrets.AZURE_OPENAI_WHISPER_API_KEY }}
+#           AZURE_OPENAI_GPT_FOUR_O_API_KEY: ${{ secrets.AZURE_OPENAI_GPT_FOUR_O_API_KEY }}
+#           AZURE_OPENAI_NCUS_GPT_FOUR_O_API_KEY: ${{ secrets.AZURE_OPENAI_NCUS_GPT_FOUR_O_API_KEY }}
+#           AZURE_OPENAI_GPT_FOUR_O_MINI_API_KEY: ${{ secrets.AZURE_OPENAI_GPT_FOUR_O_MINI_API_KEY }}
+#           AZURE_OPENAI_O_ONE_API_KEY: ${{ secrets.AZURE_OPENAI_O_ONE_API_KEY }}
+#           AZURE_OPENAI_O_ONE_MINI_API_KEY: ${{ secrets.AZURE_OPENAI_O_ONE_MINI_API_KEY }}
+#           AZURE_OPENAI_O_THREE_MINI_API_KEY: ${{ secrets.AZURE_OPENAI_O_THREE_MINI_API_KEY }}
+#           AZURE_OPENAI_GPT_4_32K_API_KEY: ${{ secrets.AZURE_OPENAI_GPT_4_32K_API_KEY }}
+#           AZURE_DEEPSEEK_R1_API_KEY: ${{ secrets.AZURE_DEEPSEEK_R1_API_KEY }}
+#           AZURE_OPENAI_EMBEDDINGS_API_KEY: ${{ secrets.AZURE_OPENAI_EMBEDDINGS_API_KEY }}
+#           AZURE_OPENAI_DALLE_API_KEY: ${{ secrets.AZURE_OPENAI_DALLE_API_KEY }}
+#           AZURE_OPENAI_ASST_API_KEY: ${{ secrets.AZURE_OPENAI_ASST_API_KEY }}
+#           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+#           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+#           AWS_S3_BUCKET_REGION: ${{ secrets.AWS_S3_BUCKET_REGION }}
+#           AWS_S3_PUBLIC_BUCKET_NAME: ${{ secrets.AWS_S3_PUBLIC_BUCKET_NAME }}
+#           AWS_S3_PUBLIC_BUCKET_IMAGE_FOLDER: ${{ secrets.AWS_S3_PUBLIC_BUCKET_IMAGE_FOLDER }}
+#           PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
+#           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+#           WEAVIATE_URL: ${{ secrets.WEAVIATE_URL }}
+#           WEAVIATE_API_KEY: ${{ secrets.WEAVIATE_API_KEY }}
+#           NEO4J_URI: ${{ secrets.NEO4J_URI }}
+#           NEO4J_USERNAME: ${{ secrets.NEO4J_USERNAME }}
+#           NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+#           UNSTRUCTURED_API_KEY: ${{ secrets.UNSTRUCTURED_API_KEY }}
+#           REPLICATE_API_KEY: ${{ secrets.REPLICATE_API_KEY }}
+#           DISCORD_SERVER_ID: ${{ secrets.DISCORD_SERVER_ID }}
+#           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+#           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+#           SERP_API_KEY: ${{ secrets.SERP_API_KEY }}
+#           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+#           CLAUDE_VERTEX_API_KEY: ${{ secrets.CLAUDE_VERTEX_API_KEY }}
+#           CLAUDE_VERTEX_REGION: ${{ secrets.CLAUDE_VERTEX_REGION }}
+#           CLAUDE_VERTEX_PROJECT_ID: ${{ secrets.CLAUDE_VERTEX_PROJECT_ID }}
+#           OPUS_API_KEY: ${{ secrets.OPUS_API_KEY }}
+#           ASSEMBLYAI_API_KEY: ${{ secrets.ASSEMBLYAI_API_KEY }}
+#           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+#           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+#           GOOGLE_SCOPES: ${{ secrets.GOOGLE_SCOPES }}
+#           GOOGLE_REDIRECT_URL: ${{ secrets.GOOGLE_REDIRECT_URL }}
+#           SALESFORCE_CLIENT_ID: ${{ secrets.SALESFORCE_CLIENT_ID }}
+#           SALESFORCE_CLIENT_SECRET: ${{ secrets.SALESFORCE_CLIENT_SECRET }}
+#           SALESFORCE_SCOPES: ${{ secrets.SALESFORCE_SCOPES }}
+#           SALESFORCE_REDIRECT_URL: ${{ secrets.SALESFORCE_REDIRECT_URL }}
+#           OUTLOOK_CLIENT_ID: ${{ secrets.OUTLOOK_CLIENT_ID }}
+#           OUTLOOK_CLIENT_SECRET: ${{ secrets.OUTLOOK_CLIENT_SECRET }}
+#           OUTLOOK_SCOPES: ${{ secrets.OUTLOOK_SCOPES }}
+#           OUTLOOK_REDIRECT_URL: ${{ secrets.OUTLOOK_REDIRECT_URL }}
+#           CHROMA_TOKEN_CREDENTIALS: ${{ secrets.CHROMA_TOKEN_CREDENTIALS }}
+#           CHROMA_HOST: ${{ secrets.CHROMA_HOST }}
+#           SYSTEM_USER: ${{ secrets.SYSTEM_USER }}
+#           SLACK_USER_OAUTH_TOKEN: ${{ secrets.SLACK_USER_OAUTH_TOKEN }}
+#           INTUIT_CLIENT_ID: ${{ secrets.INTUIT_CLIENT_ID }}
+#           INTUIT_CLIENT_SECRET: ${{ secrets.INTUIT_CLIENT_SECRET }}
+#           INTUIT_REDIRECT_URL: ${{ secrets.INTUIT_REDIRECT_URL }}
+#           INTUIT_SCOPES: ${{ secrets.INTUIT_SCOPES }}
+#           INTUIT_ENVIRONMENT: ${{ secrets.INTUIT_ENVIRONMENT }}
+#           RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
+#           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+#           CARTESIA_API_KEY: ${{ secrets.CARTESIA_API_KEY }}
+#           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+#           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+#           LOOP_SEPARATOR: ${{ secrets.LOOP_SEPARATOR }}
+#           SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+#           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+#           SLACK_SCOPE: ${{ secrets.SLACK_SCOPE }}
+#           SLACK_USER_SCOPE: ${{ secrets.SLACK_USER_SCOPE }}
+#           SLACK_REDIRECT_URL: ${{ secrets.SLACK_REDIRECT_URL }}
+#           GOOGLE_CSE_API_KEY: ${{ secrets.GOOGLE_CSE_API_KEY }}
+#           GOOGLE_CSE_CX: ${{ secrets.GOOGLE_CSE_CX }}
+#           BOX_CLIENT_ID: ${{ secrets.BOX_CLIENT_ID }}
+#           BOX_CLIENT_SECRET: ${{ secrets.BOX_CLIENT_SECRET }}
+#           BOX_REDIRECT_URL: ${{ secrets.BOX_REDIRECT_URL }}
+#           DROPBOX_CLIENT_ID: ${{ secrets.DROPBOX_CLIENT_ID }}
+#           DROPBOX_CLIENT_SECRET: ${{ secrets.DROPBOX_CLIENT_SECRET }}
+#           DROPBOX_REDIRECT_URL: ${{ secrets.DROPBOX_REDIRECT_URL }}
+#           LOOKER_CLIENT_ID: ${{ secrets.LOOKER_CLIENT_ID }}
+#           LOOKER_CLIENT_SECRET: ${{ secrets.LOOKER_CLIENT_SECRET }}
+#           LOOKER_REDIRECT_URL: ${{ secrets.LOOKER_REDIRECT_URL }}
+#           LOOKER_BASE_URL: ${{ secrets.LOOKER_BASE_URL }}
+#           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+#           GROK_MANAGEMENT_API_KEY: ${{ secrets.GROK_MANAGEMENT_API_KEY }}
+#           META_CLIENT_ID: ${{ secrets.META_CLIENT_ID }}
+#           META_CLIENT_SECRET: ${{ secrets.META_CLIENT_SECRET }}
+#           META_REDIRECT_URL: ${{ secrets.META_REDIRECT_URL }}
+#           META_SCOPES: ${{ secrets.META_SCOPES }}
+#           HUBSPOT_CLIENT_ID: ${{ secrets.HUBSPOT_CLIENT_ID }}
+#           HUBSPOT_CLIENT_SECRET: ${{ secrets.HUBSPOT_CLIENT_SECRET }}
+#           HUBSPOT_REDIRECT_URL: ${{ secrets.HUBSPOT_REDIRECT_URL }}
+#           HUBSPOT_SCOPES: ${{ secrets.HUBSPOT_SCOPES }}
+#           KEY_GITHUB_CLIENT_ID: ${{ secrets.KEY_GITHUB_CLIENT_ID }}
+#           KEY_GITHUB_CLIENT_SECRET: ${{ secrets.KEY_GITHUB_CLIENT_SECRET }}
+#           KEY_GITHUB_REDIRECT_URL: ${{ secrets.KEY_GITHUB_REDIRECT_URL }}
+#           KEY_GITHUB_SCOPES: ${{ secrets.KEY_GITHUB_SCOPES }}
+#           GOOGLE_ADS_CLIENT_ID: ${{ secrets.GOOGLE_ADS_CLIENT_ID }}
+#           GOOGLE_ADS_CLIENT_SECRET: ${{ secrets.GOOGLE_ADS_CLIENT_SECRET }}
+#           GOOGLE_ADS_REDIRECT_URL: ${{ secrets.GOOGLE_ADS_REDIRECT_URL }}
+#           GOOGLE_ADS_SCOPES: ${{ secrets.GOOGLE_ADS_SCOPES }}
+#           GOOGLE_ADS_DEVELOPER_TOKEN: ${{ secrets.GOOGLE_ADS_DEVELOPER_TOKEN }}
+#           GOOGLE_ADS_LOGIN_CUSTOMER_ID: ${{ secrets.GOOGLE_ADS_LOGIN_CUSTOMER_ID }}
+#           GOOGLE_ADS_MCC_REFRESH_TOKEN: ${{ secrets.GOOGLE_ADS_MCC_REFRESH_TOKEN }}
+#           GOOGLE_ADS_MCC_CLIENT_ID: ${{ secrets.GOOGLE_ADS_MCC_CLIENT_ID }}
+#           GOOGLE_ADS_MCC_CLIENT_SECRET: ${{ secrets.GOOGLE_ADS_MCC_CLIENT_SECRET }}

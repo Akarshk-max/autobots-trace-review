@@ -1,0 +1,197 @@
+import io
+import os
+import tempfile
+
+import httpx
+from fastapi import HTTPException
+from loguru import logger
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from pydantic import BaseModel, Field
+
+from src.autobots.action.action.common_action_models import DataBlock
+from src.autobots.conn.aws.aws_s3 import get_public_s3
+from src.autobots.core.cancellation.blocking_work import run_blocking
+from src.autobots.data_model.app_state import AppState
+from src.autobots.data_model.context import Context
+from src.autobots.server_sent_events.server_sent_events import Notify
+from src.autobots.user.user_orm_model import UserORM
+
+
+class PDFHighlightToolConfig(BaseModel):
+    pdf_url: str = Field(..., description="URL of the PDF document")
+    highlight_text: str = Field(..., description="Text to be highlighted in the PDF")
+    number_of_occurrences: int | None = Field(
+        default=None, description="How many matches to highlight (None = highlight all)"
+    )
+
+
+async def _download_pdf(url: str, ctx: Context) -> str:
+    """
+    Download PDF from a URL and save it to a temporary file.
+    Returns the local temp file path.
+    """
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=300.0) as client:
+            response = await client.get(url)
+            if response.status_code != 200:
+                logger.bind(ctx=ctx).exception(
+                    f"Failed to download PDF. HTTP Status: {response.status_code}"
+                )
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Failed to download PDF. HTTP Status: {response.status_code}",
+                )
+
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+            temp_path = temp_file.name
+            temp_file.write(response.content)
+            temp_file.close()
+            return temp_path
+
+    except httpx.RequestError as e:
+        logger.bind(ctx=ctx).exception(f"HTTP request error while downloading PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"HTTP request error: {e}")
+
+
+def _highlight_pdf(src_path: str, out_path: str, query: str, max_count: int | None) -> int:
+    """Highlight matches in the source PDF and write the result to out_path."""
+    import fitz  # PyMuPDF
+
+    flags_ignorecase = getattr(fitz, "TEXT_IGNORECASE", 0)
+    search_flags = (
+        flags_ignorecase
+        | getattr(fitz, "TEXT_DEHYPHENATE", 0)
+        | getattr(fitz, "TEXT_PRESERVE_LIGATURES", 0)
+    )
+    highlighted_count = 0
+
+    with fitz.open(src_path) as doc:
+        for page in doc:
+            rects = page.search_for(query, flags=search_flags)
+
+            if not rects and not bool(flags_ignorecase):
+                alt_queries = {query.lower(), query.upper(), query.title()}
+                alt_queries.discard(query)
+                for alt_query in alt_queries:
+                    rects.extend(
+                        page.search_for(alt_query, flags=(search_flags & ~flags_ignorecase))
+                    )
+
+            for rect in rects:
+                if max_count is not None and highlighted_count >= max_count:
+                    break
+                page.add_highlight_annot(rect)
+                highlighted_count += 1
+
+            if max_count is not None and highlighted_count >= max_count:
+                break
+
+        doc.save(out_path, garbage=4, deflate=True)
+
+    return highlighted_count
+
+
+async def pdf_highlight(
+    config: PDFHighlightToolConfig,
+    ctx: Context,
+    app_state: AppState,
+    user: UserORM,
+    db: AsyncIOMotorDatabase,
+    notify: Notify | None = None,
+) -> DataBlock | Exception:
+    """
+    Description
+    -----------
+    Downloads a PDF from the provided URL, searches for a given text within the
+    document, highlights the matching occurrences, saves the modified PDF to a
+    temporary file, uploads it to S3, and returns the public S3 URL. If no matches
+    are found, the original PDF (unchanged) is uploaded instead. Temporary files
+    are cleaned up regardless of success or failure.
+
+    Input
+    -----
+    config : dict
+        A dictionary of arguments supplied by the caller (typically an LLM).
+        Expected structure:
+            {
+                "pdf_url": "https://example.com/document.pdf",
+                "highlight_text": "some text",
+                "number_of_occurrences": 5   # optional; None = highlight all
+            }
+
+        pdf_url : str
+            The URL of the PDF document to download and process.
+
+        highlight_text : str
+            The text string to search for inside the PDF. All matched occurrences
+            (or up to the specified limit) will be highlighted.
+
+        number_of_occurrences : int | None
+            Optional limit on how many matched occurrences to highlight.
+            If set to None, all matches are highlighted.
+
+    Output
+    ------
+    str
+        A public S3 URL pointing to the highlighted PDF generated by the tool.
+        If no occurrences are found, a copy of the original PDF is uploaded and
+        returned.
+
+        In case of an unexpected error, the exception object is returned.
+    """
+    from pandas import Timestamp
+
+    src_pdf_path = None
+    out_path = None
+
+    try:
+        query = (config.highlight_text or "").strip()
+        if not query:
+            raise HTTPException(status_code=400, detail="highlight_text cannot be empty.")
+
+        # 1) Download source PDF
+        src_pdf_path = await _download_pdf(config.pdf_url, ctx)
+
+        # 2) Search+highlight off the event loop, writing to a temp file
+        tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        out_path = tmp_out.name
+        tmp_out.close()
+
+        highlighted_count = await run_blocking(
+            app_state,
+            _highlight_pdf,
+            src_pdf_path,
+            out_path,
+            query,
+            config.number_of_occurrences,
+        )
+        found_any = highlighted_count > 0
+
+        # 4) Upload to S3 and return URL
+        s3_key = f"highlighted_pdf_{Timestamp.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        with open(out_path, "rb") as f:
+            s3_url = await get_public_s3().put_file_obj(io.BytesIO(f.read()), s3_key)
+
+        if found_any:
+            logger.bind(ctx=ctx).info(
+                f"Uploaded highlighted PDF to S3 ({highlighted_count} occurrence(s)): {s3_url}"
+            )
+        else:
+            logger.bind(ctx=ctx).info(
+                f"No matches found for '{query}'. Uploaded original copy to S3: {s3_url}"
+            )
+            
+        tool_out = DataBlock(urls=[str(s3_url)])
+        return tool_out
+
+    except Exception as e:
+        logger.bind(ctx=ctx).exception(f"Error in PDF highlighting: {str(e)}")
+        return e
+    finally:
+        # Clean up temp files
+        for p in (src_pdf_path, out_path):
+            try:
+                if p and os.path.exists(p):
+                    os.remove(p)
+            except Exception:
+                pass  # best-effort cleanup

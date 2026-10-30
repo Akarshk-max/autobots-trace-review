@@ -1,0 +1,187 @@
+# name: Deploy Prod Autobots
+
+# on:
+#   workflow_dispatch:
+
+# env:
+#   IMAGE_TAG: ${{ github.ref_name }}
+#   # Datadog Environment
+#   DD_ENV: prod #${{ github.ref_name }}
+#   # Datadog Version
+#   DD_VERSION: ${{ github.ref_name }}-${{ github.run_number }}
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     environment: prod
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_SM }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_SM }}
+#           aws-region: ${{ secrets.AWS_REGION_SM }}
+
+#       - name: Setting up lightsail.pem for ssh in Runner
+#         run: |
+#           echo "$LIGHTSAIL_SSH_KEY" > lightsail.pem
+#           chmod 600 lightsail.pem
+#           echo "cat lightsail.pem" && cat lightsail.pem
+#         env:
+#           LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_AUTOBOTS_SSH_KEY }}
+
+#       - name: SSH and create docker network
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker network ls|grep autobots-network > /dev/null || docker network create autobots-network
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+#       - name: SSH and Remove Running container and image Datadog Agent
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker ps -a
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker stop datadog-agent
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker rm datadog-agent
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker ps -a
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker image prune -a -f
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker images
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+#       - name: SSH and Run Docker image Datadog agent
+#         if: always()
+#         run: >
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 
+#           docker run -d --name datadog-agent 
+#           --net-alias datadog-agent 
+#           --network autobots-network 
+#           --expose 8126
+#           --cgroupns host 
+#           --pid host 
+#           -e DD_API_KEY=$DD_API_KEY 
+#           -e DD_LOGS_ENABLED=true 
+#           -e DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true 
+#           -e DD_LOGS_CONFIG_DOCKER_CONTAINER_USE_FILE=true
+#           -e DD_CONTAINER_EXCLUDE="name:datadog-agent" 
+#           -e DD_REMOTE_CONFIGURATION_ENABLED=true 
+#           -e DD_APM_ENABLED=true
+#           -e DD_APM_NON_LOCAL_TRAFFIC=true
+#           -e DD_SITE=$DD_SITE 
+#           -v /var/run/docker.sock:/var/run/docker.sock:ro 
+#           -v /var/lib/docker/containers:/var/lib/docker/containers:ro 
+#           -v /proc/:/host/proc/:ro 
+#           -v /opt/datadog-agent/run:/opt/datadog-agent/run:rw 
+#           -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro 
+#           gcr.io/datadoghq/agent:latest
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+#           DD_API_KEY: ${{ secrets.DD_API_KEY }}
+#           DD_SITE: ${{ secrets.DD_SITE }}
+
+#       - name: SSH and Login to Container Registry
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker login registry.gitlab.com -u ${{ secrets.GITLAB_USERNAME }} -p ${{ secrets.GITLAB_TOKEN }}
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+#           GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
+#           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+
+#       - name: SSH and Remove Running container and image
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker ps -a
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker stop autobots
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker rm autobots
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker ps -a
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker image prune -a -f
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker images
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+#       - name: SSH and Pull Docker image
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker pull registry.gitlab.com/runkai/autobots:${IMAGE_TAG}
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+#       - name: Fetch secrets and create env file for Docker
+#         if: always()
+#         run: |
+#           echo "Fetching secrets from AWS Secrets Manager..."
+#           SECRET_JSON=$(aws secretsmanager get-secret-value \
+#             --secret-id ${{ secrets.AWS_SECRET_NAME }} \
+#             --query SecretString \
+#             --output text)
+          
+#           # Export to $GITHUB_ENV
+#           echo "$SECRET_JSON" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+          
+#           # Create env file
+#           echo "$SECRET_JSON" | jq -r 'to_entries[] | "\(.key)=\(.value)"' > autobots-prod.env
+          
+#           # Append workflow-specific variables
+#           cat >> autobots-prod.env << EOF
+#           ENV=${{ secrets.ENV }}
+#           DD_ENV=${DD_ENV}
+#           VERSION=${DD_VERSION}
+#           DD_VERSION=${DD_VERSION}
+#           DD_AGENT_HOST=datadog-agent
+#           DD_TRACE_ENABLED=true
+#           DD_TRACE_AGENT_PORT=8126
+#           DD_PROFILING_ENABLED=true
+#           DD_RUNTIME_METRICS_ENABLED=true
+#           DD_DOGSTATSD_URL=udp://datadog-agent:8125
+#           EOF
+          
+#           echo "✅ Secrets exported and env file created"
+
+#       - name: Copy env file to server
+#         if: always()
+#         run: |
+#           scp -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem autobots-prod.env $LIGHTSAIL_USER@$LIGHTSAIL_IP:/tmp/autobots-prod.env
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+#       - name: SSH and Run Docker image
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             "docker run -d --name autobots -p 80:80 \
+#             --memory=15g \
+#             --memory-swap=25g \
+#             --net-alias autobots \
+#             --network autobots-network \
+#             --env-file /tmp/autobots-prod.env \
+#             registry.gitlab.com/runkai/autobots:${IMAGE_TAG}"
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}

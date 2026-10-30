@@ -1,0 +1,372 @@
+# name: Deploy Prod Autobots Scheduler
+
+
+# on:
+#   workflow_dispatch:
+
+# env:
+#   IMAGE_TAG: ${{ github.ref_name }}
+#   # Datadog Environment
+#   DD_ENV: prod #${{ github.ref_name }}
+#   # Datadog Version
+#   DD_VERSION: ${{ github.ref_name }}-${{ github.run_number }}
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     environment: prod
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Setting up lightsail.pem for ssh in Runner
+#         run: |
+#           echo "$LIGHTSAIL_SSH_KEY" > lightsail.pem
+#           chmod 600 lightsail.pem
+#           echo "cat lightsail.pem" && cat lightsail.pem
+#         env:
+#           LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_AUTOBOTS_SSH_KEY }}
+
+#       - name: SSH and create docker network
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker network ls|grep autobots-network > /dev/null || docker network create autobots-network
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+# #      - name: SSH and Remove Running container and image Datadog Agent
+# #        if: always()
+# #        run: |
+# #          ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+# #            docker ps -a
+# #          ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+# #            docker stop datadog-agent
+# #          ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+# #            docker rm datadog-agent
+# #          ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+# #            docker ps -a
+# #          ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+# #            docker image prune -a -f
+# #          ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+# #            docker images
+# #        env:
+# #          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+# #          LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+# #      - name: SSH and Run Docker image Datadog agent
+# #        if: always()
+# #        run: >
+# #          ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22
+# #          docker run -d --name datadog-agent
+# #          --net-alias datadog-agent
+# #          --network autobots-network
+# #          --expose 8126
+# #          --cgroupns host
+# #          --pid host
+# #          -e DD_API_KEY=$DD_API_KEY
+# #          -e DD_LOGS_ENABLED=true
+# #          -e DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+# #          -e DD_LOGS_CONFIG_DOCKER_CONTAINER_USE_FILE=true
+# #          -e DD_CONTAINER_EXCLUDE="name:datadog-agent"
+# #          -e DD_REMOTE_CONFIGURATION_ENABLED=true
+# #          -e DD_APM_ENABLED=true
+# #          -e DD_APM_NON_LOCAL_TRAFFIC=true
+# #          -e DD_SITE=$DD_SITE
+# #          -v /var/run/docker.sock:/var/run/docker.sock:ro
+# #          -v /var/lib/docker/containers:/var/lib/docker/containers:ro
+# #          -v /proc/:/host/proc/:ro
+# #          -v /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+# #          -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+# #          gcr.io/datadoghq/agent:latest
+# #        env:
+# #          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+# #          LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+# #          DD_API_KEY: ${{ secrets.DD_API_KEY }}
+# #          DD_SITE: ${{ secrets.DD_SITE }}
+
+#       - name: SSH and Login to Container Registry
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker login registry.gitlab.com -u ${{ secrets.GITLAB_USERNAME }} -p ${{ secrets.GITLAB_TOKEN }}
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+#           GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
+#           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+
+#       - name: SSH and Remove Running container and image
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker ps -a
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker stop autobots-scheduler
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker rm autobots-scheduler
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker ps -a
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker image prune -a -f
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker images
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+#       - name: SSH and Pull Docker image
+#         if: always()
+#         run: |
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 \
+#             docker pull registry.gitlab.com/runkai/autobots-scheduler:${IMAGE_TAG}
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+
+#       - name: SSH and Run Docker image
+#         if: always()
+#         run: >
+#           ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -i ./lightsail.pem $LIGHTSAIL_USER@$LIGHTSAIL_IP -p 22 
+#           docker run -d --name autobots-scheduler
+#           --memory=5g 
+#           --memory-swap=10g
+#           --net-alias autobots 
+#           --network autobots-network 
+#           -e ENV=$ENV
+#           -e DD_ENV=${DD_ENV} 
+#           -e VERSION=${DD_VERSION}
+#           -e COOKIE_DOMAIN=$COOKIE_DOMAIN 
+#           -e ALLOW_ORIGINS=$ALLOW_ORIGINS 
+#           -e ACTION_GRAPH_LOOPS_CONCURRENCY_LIMIT=$ACTION_GRAPH_LOOPS_CONCURRENCY_LIMIT
+#           -e SCHEDULER_URL=$SCHEDULER_URL
+#           -e SQLALCHEMY_DATABASE_URL=$SQLALCHEMY_DATABASE_URL 
+#           -e SQLALCHEMY_DATABASE_SCHEMA=$SQLALCHEMY_DATABASE_SCHEMA
+#           -e SUPABASE_URL=$SUPABASE_URL 
+#           -e SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY 
+#           -e JWT_SECRET_KEY=$JWT_SECRET_KEY 
+#           -e MONGO_CONN=$MONGO_CONN 
+#           -e MONGO_DATABASE=$MONGO_DATABASE
+#           -e REDIS_HOST=$REDIS_HOST
+#           -e OPENAI_ORG_ID=$OPENAI_ORG_ID 
+#           -e OPENAI_API_KEY=$OPENAI_API_KEY 
+#           -e OPENAI_TYPE_IS_AZURE=$OPENAI_TYPE_IS_AZURE
+#           -e AZURE_OPENAI_API_KEY_EASTUS2=$AZURE_OPENAI_API_KEY_EASTUS2
+#           -e AZURE_OPENAI_TTS_API_KEY=$AZURE_OPENAI_TTS_API_KEY
+#           -e AZURE_OPENAI_WHISPER_API_KEY=$AZURE_OPENAI_WHISPER_API_KEY
+#           -e AZURE_OPENAI_GPT_FOUR_O_API_KEY=$AZURE_OPENAI_GPT_FOUR_O_API_KEY
+#           -e AZURE_OPENAI_NCUS_GPT_FOUR_O_API_KEY=$AZURE_OPENAI_NCUS_GPT_FOUR_O_API_KEY
+#           -e AZURE_OPENAI_GPT_FOUR_O_MINI_API_KEY=$AZURE_OPENAI_GPT_FOUR_O_MINI_API_KEY
+#           -e AZURE_OPENAI_O_ONE_API_KEY=$AZURE_OPENAI_O_ONE_API_KEY
+#           -e AZURE_OPENAI_O_ONE_MINI_API_KEY=$AZURE_OPENAI_O_ONE_MINI_API_KEY
+#           -e AZURE_OPENAI_O_THREE_MINI_API_KEY=$AZURE_OPENAI_O_THREE_MINI_API_KEY
+#           -e AZURE_OPENAI_GPT_4_32K_API_KEY=$AZURE_OPENAI_GPT_4_32K_API_KEY
+#           -e AZURE_DEEPSEEK_R1_API_KEY=$AZURE_DEEPSEEK_R1_API_KEY
+#           -e AZURE_OPENAI_EMBEDDINGS_API_KEY=$AZURE_OPENAI_EMBEDDINGS_API_KEY
+#           -e AZURE_OPENAI_DALLE_API_KEY=$AZURE_OPENAI_DALLE_API_KEY
+#           -e AZURE_OPENAI_ASST_API_KEY=$AZURE_OPENAI_ASST_API_KEY
+#           -e UNSPLASH_ACCESS_KEY=$UNSPLASH_ACCESS_KEY 
+#           -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID 
+#           -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY 
+#           -e AWS_S3_BUCKET_NAME=$AWS_S3_BUCKET_NAME 
+#           -e AWS_S3_BUCKET_REGION=$AWS_S3_BUCKET_REGION 
+#           -e AWS_S3_PUBLIC_BUCKET_NAME=$AWS_S3_PUBLIC_BUCKET_NAME 
+#           -e AWS_S3_PUBLIC_BUCKET_IMAGE_FOLDER=$AWS_S3_PUBLIC_BUCKET_IMAGE_FOLDER 
+#           -e PINECONE_ENVIRONMENT=$PINECONE_ENVIRONMENT 
+#           -e PINECONE_API_KEY=$PINECONE_API_KEY 
+#           -e WEAVIATE_URL=$WEAVIATE_URL
+#           -e WEAVIATE_API_KEY=$WEAVIATE_API_KEY
+#           -e NEO4J_URI=$NEO4J_URI 
+#           -e NEO4J_USERNAME=$NEO4J_USERNAME
+#           -e NEO4J_PASSWORD=$NEO4J_PASSWORD
+#           -e UNSTRUCTURED_API_KEY=$UNSTRUCTURED_API_KEY 
+#           -e REPLICATE_API_KEY=$REPLICATE_API_KEY 
+#           -e DISCORD_SERVER_ID=$DISCORD_SERVER_ID 
+#           -e DISCORD_TOKEN=$DISCORD_TOKEN 
+#           -e DISCORD_CHANNEL_ID=$DISCORD_CHANNEL_ID 
+#           -e SERP_API_KEY=$SERP_API_KEY
+#           -e CLAUDE_API_KEY=$CLAUDE_API_KEY
+#           -e CLAUDE_VERTEX_API_KEY=$CLAUDE_VERTEX_API_KEY
+#           -e CLAUDE_VERTEX_REGION=$CLAUDE_VERTEX_REGION
+#           -e CLAUDE_VERTEX_PROJECT_ID=$CLAUDE_VERTEX_PROJECT_ID
+#           -e OPUS_API_KEY=$OPUS_API_KEY
+#           -e ASSEMBLYAI_API_KEY=$ASSEMBLYAI_API_KEY
+#           -e GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+#           -e GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+#           -e GOOGLE_SCOPES=$GOOGLE_SCOPES
+#           -e GOOGLE_REDIRECT_URL=$GOOGLE_REDIRECT_URL
+#           -e SALESFORCE_CLIENT_ID=$SALESFORCE_CLIENT_ID
+#           -e SALESFORCE_CLIENT_SECRET=$SALESFORCE_CLIENT_SECRET
+#           -e SALESFORCE_SCOPES=$SALESFORCE_SCOPES
+#           -e SALESFORCE_REDIRECT_URL=$SALESFORCE_REDIRECT_URL
+#           -e OUTLOOK_CLIENT_ID=$OUTLOOK_CLIENT_ID
+#           -e OUTLOOK_CLIENT_SECRET=$OUTLOOK_CLIENT_SECRET
+#           -e OUTLOOK_SCOPES=$OUTLOOK_SCOPES
+#           -e OUTLOOK_REDIRECT_URL=$OUTLOOK_REDIRECT_URL
+#           -e CHROMA_TOKEN_CREDENTIALS=$CHROMA_TOKEN_CREDENTIALS
+#           -e CHROMA_HOST=$CHROMA_HOST
+#           -e SYSTEM_USER=$SYSTEM_USER
+#           -e SLACK_USER_OAUTH_TOKEN=$SLACK_USER_OAUTH_TOKEN
+#           -e INTUIT_CLIENT_ID=$INTUIT_CLIENT_ID
+#           -e INTUIT_CLIENT_SECRET=$INTUIT_CLIENT_SECRET
+#           -e INTUIT_REDIRECT_URL=$INTUIT_REDIRECT_URL
+#           -e INTUIT_SCOPES=$INTUIT_SCOPES
+#           -e INTUIT_ENVIRONMENT=$INTUIT_ENVIRONMENT
+#           -e RAPID_API_KEY=$RAPID_API_KEY
+#           -e DEEPGRAM_API_KEY=$DEEPGRAM_API_KEY
+#           -e CARTESIA_API_KEY=$CARTESIA_API_KEY
+#           -e EXA_API_KEY=$EXA_API_KEY
+#           -e GEMINI_API_KEY=$GEMINI_API_KEY
+#           -e LOOP_SEPARATOR=$LOOP_SEPARATOR
+#           -e SLACK_CLIENT_ID=$SLACK_CLIENT_ID
+#           -e SLACK_CLIENT_SECRET=$SLACK_CLIENT_SECRET
+#           -e SLACK_SCOPE=$SLACK_SCOPE
+#           -e SLACK_USER_SCOPE=$SLACK_USER_SCOPE
+#           -e SLACK_REDIRECT_URL=$SLACK_REDIRECT_URL
+#           -e GOOGLE_CSE_API_KEY=$GOOGLE_CSE_API_KEY
+#           -e GOOGLE_CSE_CX=$GOOGLE_CSE_CX
+#           -e BOX_CLIENT_ID=$BOX_CLIENT_ID
+#           -e BOX_CLIENT_SECRET=$BOX_CLIENT_SECRET
+#           -e BOX_REDIRECT_URL=$BOX_REDIRECT_URL
+#           -e GROK_API_KEY=$GROK_API_KEY
+#           -e GROK_MANAGEMENT_API_KEY=$GROK_MANAGEMENT_API_KEY
+#           -e META_CLIENT_ID=$META_CLIENT_ID
+#           -e META_CLIENT_SECRET=$META_CLIENT_SECRET
+#           -e META_REDIRECT_URL=$META_REDIRECT_URL
+#           -e META_SCOPES=$META_SCOPES
+#           -e HUBSPOT_CLIENT_ID=$HUBSPOT_CLIENT_ID
+#           -e HUBSPOT_CLIENT_SECRET=$HUBSPOT_CLIENT_SECRET
+#           -e HUBSPOT_REDIRECT_URL=$HUBSPOT_REDIRECT_URL
+#           -e HUBSPOT_SCOPES=$HUBSPOT_SCOPES
+#           -e KEY_GITHUB_CLIENT_ID=$KEY_GITHUB_CLIENT_ID
+#           -e KEY_GITHUB_CLIENT_SECRET=$KEY_GITHUB_CLIENT_SECRET
+#           -e KEY_GITHUB_REDIRECT_URL=$KEY_GITHUB_REDIRECT_URL
+#           -e KEY_GITHUB_SCOPES=$KEY_GITHUB_SCOPES
+#           -e GOOGLE_ADS_CLIENT_ID=$GOOGLE_ADS_CLIENT_ID
+#           -e GOOGLE_ADS_CLIENT_SECRET=$GOOGLE_ADS_CLIENT_SECRET
+#           -e GOOGLE_ADS_REDIRECT_URL=$GOOGLE_ADS_REDIRECT_URL
+#           -e GOOGLE_ADS_SCOPES=$GOOGLE_ADS_SCOPES
+#           -e GOOGLE_ADS_DEVELOPER_TOKEN=$GOOGLE_ADS_DEVELOPER_TOKEN
+#           -e GOOGLE_ADS_LOGIN_CUSTOMER_ID=$GOOGLE_ADS_LOGIN_CUSTOMER_ID
+#           -e GOOGLE_ADS_MCC_REFRESH_TOKEN=$GOOGLE_ADS_MCC_REFRESH_TOKEN
+#           -e GOOGLE_ADS_MCC_CLIENT_ID=$GOOGLE_ADS_MCC_CLIENT_ID
+#           -e GOOGLE_ADS_MCC_CLIENT_SECRET=$GOOGLE_ADS_MCC_CLIENT_SECRET
+#           registry.gitlab.com/runkai/autobots-scheduler:${IMAGE_TAG}
+#         env:
+#           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_AUTOBOTS_USERNAME }}
+#           LIGHTSAIL_IP: ${{ secrets.LIGHTSAIL_AUTOBOTS_IP }}
+#           ENV: ${{ secrets.ENV }}
+#           COOKIE_DOMAIN: ${{ secrets.COOKIE_DOMAIN }}
+#           ALLOW_ORIGINS: ${{ secrets.ALLOW_ORIGINS }}
+#           ACTION_GRAPH_LOOPS_CONCURRENCY_LIMIT: ${{ secrets.ACTION_GRAPH_LOOPS_CONCURRENCY_LIMIT }}
+#           SCHEDULER_URL: ${{ secrets.SCHEDULER_URL }}
+#           SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
+#           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+#           SQLALCHEMY_DATABASE_SCHEMA: ${{ secrets.SQLALCHEMY_DATABASE_SCHEMA }}
+#           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+#           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+#           MONGO_CONN: ${{ secrets.MONGO_CONN }}
+#           MONGO_DATABASE: ${{ secrets.MONGO_DATABASE }}
+#           REDIS_HOST: ${{ secrets.REDIS_HOST }}
+#           OPENAI_ORG_ID: ${{ secrets.OPENAI_ORG_ID }}
+#           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#           OPENAI_TYPE_IS_AZURE: ${{ secrets.OPENAI_TYPE_IS_AZURE }}
+#           AZURE_OPENAI_API_KEY_EASTUS2: ${{ secrets.AZURE_OPENAI_API_KEY_EASTUS2 }}
+#           AZURE_OPENAI_TTS_API_KEY: ${{ secrets.AZURE_OPENAI_TTS_API_KEY }}
+#           AZURE_OPENAI_WHISPER_API_KEY: ${{ secrets.AZURE_OPENAI_WHISPER_API_KEY }}
+#           AZURE_OPENAI_GPT_FOUR_O_API_KEY: ${{ secrets.AZURE_OPENAI_GPT_FOUR_O_API_KEY }}
+#           AZURE_OPENAI_NCUS_GPT_FOUR_O_API_KEY: ${{ secrets.AZURE_OPENAI_NCUS_GPT_FOUR_O_API_KEY }}
+#           AZURE_OPENAI_GPT_FOUR_O_MINI_API_KEY: ${{ secrets.AZURE_OPENAI_GPT_FOUR_O_MINI_API_KEY }}
+#           AZURE_OPENAI_O_ONE_API_KEY: ${{ secrets.AZURE_OPENAI_O_ONE_API_KEY }}
+#           AZURE_OPENAI_O_ONE_MINI_API_KEY: ${{ secrets.AZURE_OPENAI_O_ONE_MINI_API_KEY }}
+#           AZURE_OPENAI_O_THREE_MINI_API_KEY: ${{ secrets.AZURE_OPENAI_O_THREE_MINI_API_KEY }}
+#           AZURE_OPENAI_GPT_4_32K_API_KEY: ${{ secrets.AZURE_OPENAI_GPT_4_32K_API_KEY }}
+#           AZURE_DEEPSEEK_R1_API_KEY: ${{ secrets.AZURE_DEEPSEEK_R1_API_KEY }}
+#           AZURE_OPENAI_EMBEDDINGS_API_KEY: ${{ secrets.AZURE_OPENAI_EMBEDDINGS_API_KEY }}
+#           AZURE_OPENAI_DALLE_API_KEY: ${{ secrets.AZURE_OPENAI_DALLE_API_KEY }}
+#           AZURE_OPENAI_ASST_API_KEY: ${{ secrets.AZURE_OPENAI_ASST_API_KEY }}
+#           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+#           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+#           AWS_S3_BUCKET_REGION: ${{ secrets.AWS_S3_BUCKET_REGION }}
+#           AWS_S3_PUBLIC_BUCKET_NAME: ${{ secrets.AWS_S3_PUBLIC_BUCKET_NAME }}
+#           AWS_S3_PUBLIC_BUCKET_IMAGE_FOLDER: ${{ secrets.AWS_S3_PUBLIC_BUCKET_IMAGE_FOLDER }}
+#           PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
+#           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+#           WEAVIATE_URL: ${{ secrets.WEAVIATE_URL }}
+#           WEAVIATE_API_KEY: ${{ secrets.WEAVIATE_API_KEY }}
+#           NEO4J_URI: ${{ secrets.NEO4J_URI }}
+#           NEO4J_USERNAME: ${{ secrets.NEO4J_USERNAME }}
+#           NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+#           UNSTRUCTURED_API_KEY: ${{ secrets.UNSTRUCTURED_API_KEY }}
+#           REPLICATE_API_KEY: ${{ secrets.REPLICATE_API_KEY }}
+#           DISCORD_SERVER_ID: ${{ secrets.DISCORD_SERVER_ID }}
+#           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+#           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+#           SERP_API_KEY: ${{ secrets.SERP_API_KEY }}
+#           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+#           OPUS_API_KEY: ${{ secrets.OPUS_API_KEY }}
+#           ASSEMBLYAI_API_KEY: ${{ secrets.ASSEMBLYAI_API_KEY }}
+#           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+#           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+#           GOOGLE_SCOPES: ${{ secrets.GOOGLE_SCOPES }}
+#           GOOGLE_REDIRECT_URL: ${{ secrets.GOOGLE_REDIRECT_URL }}
+#           SALESFORCE_CLIENT_ID: ${{ secrets.SALESFORCE_CLIENT_ID }}
+#           SALESFORCE_CLIENT_SECRET: ${{ secrets.SALESFORCE_CLIENT_SECRET }}
+#           SALESFORCE_SCOPES: ${{ secrets.SALESFORCE_SCOPES }}
+#           SALESFORCE_REDIRECT_URL: ${{ secrets.SALESFORCE_REDIRECT_URL }}
+#           OUTLOOK_CLIENT_ID: ${{ secrets.OUTLOOK_CLIENT_ID }}
+#           OUTLOOK_CLIENT_SECRET: ${{ secrets.OUTLOOK_CLIENT_SECRET }}
+#           OUTLOOK_SCOPES: ${{ secrets.OUTLOOK_SCOPES }}
+#           OUTLOOK_REDIRECT_URL: ${{ secrets.OUTLOOK_REDIRECT_URL }}
+#           CHROMA_TOKEN_CREDENTIALS: ${{ secrets.CHROMA_TOKEN_CREDENTIALS }}
+#           CHROMA_HOST: ${{ secrets.CHROMA_HOST }}
+#           SYSTEM_USER: ${{ secrets.SYSTEM_USER }}
+#           SLACK_USER_OAUTH_TOKEN: ${{ secrets.SLACK_USER_OAUTH_TOKEN }}
+#           INTUIT_CLIENT_ID: ${{ secrets.INTUIT_CLIENT_ID }}
+#           INTUIT_CLIENT_SECRET: ${{ secrets.INTUIT_CLIENT_SECRET }}
+#           INTUIT_REDIRECT_URL: ${{ secrets.INTUIT_REDIRECT_URL }}
+#           INTUIT_SCOPES: ${{ secrets.INTUIT_SCOPES }}
+#           INTUIT_ENVIRONMENT: ${{ secrets.INTUIT_ENVIRONMENT }}
+#           RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
+#           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+#           CARTESIA_API_KEY: ${{ secrets.CARTESIA_API_KEY }}
+#           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+#           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+#           LOOP_SEPARATOR: ${{ secrets.LOOP_SEPARATOR }}
+#           SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+#           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+#           SLACK_SCOPE: ${{ secrets.SLACK_SCOPE }}
+#           SLACK_USER_SCOPE: ${{ secrets.SLACK_USER_SCOPE }}
+#           SLACK_REDIRECT_URL: ${{ secrets.SLACK_REDIRECT_URL }}
+#           GOOGLE_CSE_API_KEY: ${{ secrets.GOOGLE_CSE_API_KEY }}
+#           GOOGLE_CSE_CX: ${{ secrets.GOOGLE_CSE_CX }}
+#           BOX_CLIENT_ID: ${{ secrets.BOX_CLIENT_ID }}
+#           BOX_CLIENT_SECRET: ${{ secrets.BOX_CLIENT_SECRET }}
+#           BOX_REDIRECT_URL: ${{ secrets.BOX_REDIRECT_URL }}
+#           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+#           GROK_MANAGEMENT_API_KEY: ${{ secrets.GROK_MANAGEMENT_API_KEY }}
+#           META_CLIENT_ID: ${{ secrets.META_CLIENT_ID }}
+#           META_CLIENT_SECRET: ${{ secrets.META_CLIENT_SECRET }}
+#           META_REDIRECT_URL: ${{ secrets.META_REDIRECT_URL }}
+#           META_SCOPES: ${{ secrets.META_SCOPES }}
+#           HUBSPOT_CLIENT_ID: ${{ secrets.HUBSPOT_CLIENT_ID }}
+#           HUBSPOT_CLIENT_SECRET: ${{ secrets.HUBSPOT_CLIENT_SECRET }}
+#           HUBSPOT_REDIRECT_URL: ${{ secrets.HUBSPOT_REDIRECT_URL }}
+#           HUBSPOT_SCOPES: ${{ secrets.HUBSPOT_SCOPES }}
+#           KEY_GITHUB_CLIENT_ID: ${{ secrets.KEY_GITHUB_CLIENT_ID }}
+#           KEY_GITHUB_CLIENT_SECRET: ${{ secrets.KEY_GITHUB_CLIENT_SECRET }}
+#           KEY_GITHUB_REDIRECT_URL: ${{ secrets.KEY_GITHUB_REDIRECT_URL }}
+#           KEY_GITHUB_SCOPES: ${{ secrets.KEY_GITHUB_SCOPES }}
+#           GOOGLE_ADS_CLIENT_ID: ${{ secrets.GOOGLE_ADS_CLIENT_ID }}
+#           GOOGLE_ADS_CLIENT_SECRET: ${{ secrets.GOOGLE_ADS_CLIENT_SECRET }}
+#           GOOGLE_ADS_REDIRECT_URL: ${{ secrets.GOOGLE_ADS_REDIRECT_URL }}
+#           GOOGLE_ADS_SCOPES: ${{ secrets.GOOGLE_ADS_SCOPES }}
+#           GOOGLE_ADS_DEVELOPER_TOKEN: ${{ secrets.GOOGLE_ADS_DEVELOPER_TOKEN }}
+#           GOOGLE_ADS_LOGIN_CUSTOMER_ID: ${{ secrets.GOOGLE_ADS_LOGIN_CUSTOMER_ID }}
+#           GOOGLE_ADS_MCC_REFRESH_TOKEN: ${{ secrets.GOOGLE_ADS_MCC_REFRESH_TOKEN }}
+#           GOOGLE_ADS_MCC_CLIENT_ID: ${{ secrets.GOOGLE_ADS_MCC_CLIENT_ID }}
+#           GOOGLE_ADS_MCC_CLIENT_SECRET: ${{ secrets.GOOGLE_ADS_MCC_CLIENT_SECRET }}
