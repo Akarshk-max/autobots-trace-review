@@ -83,7 +83,7 @@ dependencies = [
     "neo4j==6.2.0",
     "json5==0.12.1",
     "cartesia>=2.0.15,<3.0.0",
-    "xai-sdk==1.7.0",
+    "xai-sdk==1.21.0",
     "playwright==1.58.0",
     "beautifulsoup4==4.15.0",
     "onnxruntime==1.21.0",
